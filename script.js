@@ -9,7 +9,7 @@ const msgText = document.getElementById("message-text");
 const playAgainBtn = document.getElementById("play-again");
 
 const bgMusic = document.getElementById("bg-music");
-const mergeSound = document.getElementById("merge-sound");
+
 
 // try to play music (some browsers need user interaction first)
 document.body.addEventListener("click", () => {
@@ -68,7 +68,7 @@ function merge(row) {
       row[i] *= 2;
       row[i+1] = 0;
       score += row[i];
-      if (mergeSound) mergeSound.play().catch(() => {});
+      
     }
   }
   return row;
