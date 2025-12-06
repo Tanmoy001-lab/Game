@@ -2,25 +2,29 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>🎨 2048 Deluxe 🎵</title>
+  <title>🎨 2048 Deluxe Edition 🎵</title>
   <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
+
 <body>
+
   <h1>🎨 2048 Deluxe Edition 🎵</h1>
+
   <div id="score">Score: 0</div>
 
   <div id="grid"></div>
 
-  <!-- Background music -->
+  <!-- Background music (optional but supported) -->
   <audio id="bg-music" src="background.mp3" loop></audio>
-  <!-- Merge sound -->
-  
 
+  <!-- Win / Loss Popup -->
   <div id="message" class="hidden">
     <div id="message-text"></div>
     <button id="play-again">Play Again</button>
   </div>
 
   <script src="script.js"></script>
+
 </body>
 </html>
