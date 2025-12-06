@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>🎨 2048 Deluxe 🎵</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>🎨 2048 Deluxe Edition 🎵</h1>
+  <div id="score">Score: 0</div>
+
+  <div id="grid"></div>
+
+  <!-- Background music -->
+  <audio id="bg-music" src="background.mp3" loop></audio>
+  <!-- Merge sound -->
+  <audio id="merge-sound" src="merge.wav"></audio>
+
+  <div id="message" class="hidden">
+    <div id="message-text"></div>
+    <button id="play-again">Play Again</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
