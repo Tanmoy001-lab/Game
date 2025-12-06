@@ -1,0 +1,45 @@
+body {
+  background: #222;
+  color: #f1f1f1;
+  font-family: "Comic Sans MS", sans-serif;
+  text-align: center;
+}
+
+#grid {
+  display: grid;
+  grid-template-columns: repeat(4, 130px);
+  grid-gap: 6px;
+  margin: 20px auto;
+  background: #1c1c1c;
+  padding: 10px;
+}
+
+.cell {
+  width: 130px;
+  height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: bold;
+  border-radius: 8px;
+}
+
+/* simple default; in JS you can add classes like .v2, .v4 etc. */
+.v0  { background: #3c3a32; color: #f9f6f2; }
+.v2  { background: #fcefe6; color: #776e65; }
+.v4  { background: #f2e8cb; color: #776e65; }
+.v8  { background: #f5b682; color: #f9f6f2; }
+/* ... and so on ... */
+
+#message {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.hidden { display: none; }
