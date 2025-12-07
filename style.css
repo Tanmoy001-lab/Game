@@ -1,45 +1,261 @@
+/* Reset & base */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;          /* 🚫 no scrolling, no pull-to-refresh area */
+}
+
 body {
-  background: #222;
-  color: #f1f1f1;
-  font-family: "Comic Sans MS", sans-serif;
+  font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
+  background: #faf8ef;
+  color: #776e65;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Game container */
+
+.game-container {
+  width: min(95vw, 500px);   /* scale to screen, max 500px */
+}
+
+/* Header */
+
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.title-block h1 {
+  font-size: 48px;
+  font-weight: bold;
+  color: #776e65;
+  line-height: 1;
+}
+
+.subtitle {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* Score boxes */
+
+.score-blocks {
+  display: flex;
+  gap: 6px;
+}
+
+.score-box {
+  background: #bbada0;
+  border-radius: 3px;
+  padding: 4px 10px;
+  text-align: center;
+  color: #f9f6f2;
+  min-width: 60px;
+}
+
+.score-box .label {
+  font-size: 10px;
+}
+
+.score-box .value {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* Controls */
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+#new-game {
+  background: #8f7a66;
+  border: none;
+  border-radius: 3px;
+  color: #f9f6f2;
+  font-weight: bold;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+#new-game:hover {
+  background: #9f8b76;
+}
+
+.hint {
+  font-size: 10px;
+  color: #8f7a66;
+}
+
+/* Board wrapper */
+
+#board-wrapper {
+  background: #bbada0;
+  padding: 10px;
+  border-radius: 6px;
+  touch-action: none;   /* ❗ disable browser's own gestures here */
+}
+
+/* Grid */
+
+.grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* Tiles */
+
+.tile {
+  width: 100%;
+  aspect-ratio: 1 / 1;    /* perfect square without hacks */
+  border-radius: 3px;
+  position: relative;
+  background: #cdc1b4;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.tile-value {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: clamp(18px, 5vw, 28px);
+}
+
+/* Colors */
+
+.tile-0 {
+  background: #cdc1b4;
+}
+
+.tile-2 {
+  background: #eee4da;
+  color: #776e65;
+}
+
+.tile-4 {
+  background: #ede0c8;
+  color: #776e65;
+}
+
+.tile-8 {
+  background: #f2b179;
+  color: #f9f6f2;
+}
+
+.tile-16 {
+  background: #f59563;
+  color: #f9f6f2;
+}
+
+.tile-32 {
+  background: #f67c5f;
+  color: #f9f6f2;
+}
+
+.tile-64 {
+  background: #f65e3b;
+  color: #f9f6f2;
+}
+
+.tile-128 {
+  background: #edcf72;
+  color: #f9f6f2;
+}
+
+.tile-256 {
+  background: #edcc61;
+  color: #f9f6f2;
+}
+
+.tile-512 {
+  background: #edc850;
+  color: #f9f6f2;
+}
+
+.tile-1024 {
+  background: #edc53f;
+  color: #f9f6f2;
+}
+
+.tile-2048 {
+  background: #edc22e;
+  color: #f9f6f2;
+}
+
+/* Overlay */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(238, 228, 218, 0.73);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.overlay-content {
+  background: #f9f6f2;
+  padding: 16px 24px;
+  border-radius: 6px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
   text-align: center;
 }
 
-#grid {
-  display: grid;
-  grid-template-columns: repeat(4, 130px);
-  grid-gap: 6px;
-  margin: 20px auto;
-  background: #1c1c1c;
-  padding: 10px;
+.overlay-text {
+  font-size: 20px;
+  margin-bottom: 10px;
 }
 
-.cell {
-  width: 130px;
-  height: 130px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
+.overlay-button {
+  background: #8f7a66;
+  border: none;
+  border-radius: 3px;
+  color: #f9f6f2;
   font-weight: bold;
-  border-radius: 8px;
+  padding: 6px 14px;
+  margin: 4px;
+  cursor: pointer;
+  font-size: 12px;
 }
 
-/* simple default; in JS you can add classes like .v2, .v4 etc. */
-.v0  { background: #3c3a32; color: #f9f6f2; }
-.v2  { background: #fcefe6; color: #776e65; }
-.v4  { background: #f2e8cb; color: #776e65; }
-.v8  { background: #f5b682; color: #f9f6f2; }
-/* ... and so on ... */
-
-#message {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.7);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+.overlay-button.secondary {
+  background: #bbada0;
 }
 
-.hidden { display: none; }
+.overlay-button:hover {
+  filter: brightness(1.05);
+}
+
+.hidden {
+  display: none;
+}
+
+/* Extra small screens */
+
+@media (max-height: 600px) {
+  .game-header {
+    margin-bottom: 6px;
+  }
+  .controls {
+    margin-bottom: 6px;
+  }
+}

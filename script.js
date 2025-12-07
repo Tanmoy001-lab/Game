@@ -1,240 +1,372 @@
-// 2048 Deluxe – browser version
+// Advanced 2048 implementation (keyboard + swipe + best score)
 
-const gridSize = 4;
+const GRID_SIZE = 4;
+const TARGET_TILE = 2048;
+
 let board = [];
 let score = 0;
+let bestScore = 0;
+let gameWon = false;
+let gameOverFlag = false;
+let inputLocked = false; // block input during overlay
 
-let scoreLabel;
-let gridDiv;
-let msgDiv;
-let msgText;
-let playAgainBtn;
+// DOM elements
+let gridElement;
+let scoreElement;
+let bestScoreElement;
+let newGameButton;
+let overlay;
+let overlayText;
+let overlayContinue;
+let overlayRestart;
 let bgMusic;
 
 document.addEventListener("DOMContentLoaded", () => {
-  scoreLabel   = document.getElementById("score");
-  gridDiv      = document.getElementById("grid");
-  msgDiv       = document.getElementById("message");
-  msgText      = document.getElementById("message-text");
-  playAgainBtn = document.getElementById("play-again");
-  bgMusic      = document.getElementById("bg-music");
+  // Grab DOM elements
+  gridElement = document.getElementById("grid");
+  scoreElement = document.getElementById("score");
+  bestScoreElement = document.getElementById("best-score");
+  newGameButton = document.getElementById("new-game");
+  overlay = document.getElementById("overlay");
+  overlayText = document.getElementById("overlay-text");
+  overlayContinue = document.getElementById("overlay-continue");
+  overlayRestart = document.getElementById("overlay-restart");
+  bgMusic = document.getElementById("bg-music");
 
-  // Start background music on first user interaction (mobile browsers need this)
-  const startMusicOnce = () => {
-    if (bgMusic && bgMusic.paused) {
-      bgMusic.volume = 0.5;
-      bgMusic.play().catch(() => {});
-    }
-    document.removeEventListener("click", startMusicOnce);
-    document.removeEventListener("touchstart", startMusicOnce);
-  };
-  document.addEventListener("click", startMusicOnce, { once: true });
-  document.addEventListener("touchstart", startMusicOnce, { once: true });
+  // Load best score from localStorage
+  const storedBest = localStorage.getItem("bestScore2048");
+  if (storedBest) {
+    bestScore = parseInt(storedBest, 10) || 0;
+  }
+  updateScoreUI();
 
-  // Play again button
-  playAgainBtn.addEventListener("click", () => {
-    msgDiv.classList.add("hidden");
-    initBoard();
+  // New Game button
+  newGameButton.addEventListener("click", resetGame);
+
+  // Overlay buttons
+  overlayContinue.addEventListener("click", () => {
+    hideOverlay();
+    inputLocked = false;
+    gameWon = true; // allow continuing beyond 2048
+  });
+
+  overlayRestart.addEventListener("click", () => {
+    hideOverlay();
+    resetGame();
   });
 
   // Keyboard controls
   document.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowLeft")  handleMove("left");
-    if (e.key === "ArrowRight") handleMove("right");
-    if (e.key === "ArrowUp")    handleMove("up");
-    if (e.key === "ArrowDown")  handleMove("down");
+    if (inputLocked) return;
+
+    const key = e.key;
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) {
+      e.preventDefault(); // avoid page scrolling
+    }
+
+    if (key === "ArrowLeft")  handleMove("left");
+    if (key === "ArrowRight") handleMove("right");
+    if (key === "ArrowUp")    handleMove("up");
+    if (key === "ArrowDown")  handleMove("down");
   });
 
-  // Touch / swipe controls (for phone)
+  // Touch controls (for mobile)
   setupTouchControls();
 
+  // Attempt to start music on first interaction, but safe if file missing
+  setupMusicAutoplay();
+
   // Start game
-  initBoard();
+  initGame();
 });
 
-function initBoard() {
-  board = [];
-  for (let i = 0; i < gridSize; i++) {
-    board.push(new Array(gridSize).fill(0));
-  }
+/* ---------- Game setup ---------- */
+
+function initGame() {
+  board = Array.from({ length: GRID_SIZE }, () =>
+    Array(GRID_SIZE).fill(0)
+  );
   score = 0;
-  addNewTile();
-  addNewTile();
-  render();
+  gameWon = false;
+  gameOverFlag = false;
+  inputLocked = false;
+
+  spawnTile();
+  spawnTile();
+  renderBoard();
+  updateScoreUI();
 }
 
-function addNewTile() {
-  const empty = [];
-  for (let r = 0; r < gridSize; r++) {
-    for (let c = 0; c < gridSize; c++) {
-      if (board[r][c] === 0) empty.push({ r, c });
+function resetGame() {
+  initGame();
+}
+
+/* ---------- Core logic ---------- */
+
+function spawnTile() {
+  const emptyCells = [];
+  for (let r = 0; r < GRID_SIZE; r++) {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      if (board[r][c] === 0) {
+        emptyCells.push({ r, c });
+      }
     }
   }
-  if (empty.length === 0) return;
-  const { r, c } = empty[Math.floor(Math.random() * empty.length)];
+  if (emptyCells.length === 0) return;
+
+  const { r, c } = emptyCells[Math.floor(Math.random() * emptyCells.length)];
   board[r][c] = Math.random() < 0.9 ? 2 : 4;
 }
 
-function render() {
-  gridDiv.innerHTML = "";
-  for (let r = 0; r < gridSize; r++) {
-    for (let c = 0; c < gridSize; c++) {
-      const val = board[r][c];
-      const cell = document.createElement("div");
-      cell.className = `cell v${val}`;
-      cell.textContent = val === 0 ? "" : val;
-      gridDiv.appendChild(cell);
+function renderBoard() {
+  gridElement.innerHTML = "";
+
+  for (let r = 0; r < GRID_SIZE; r++) {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      const value = board[r][c];
+      const tile = document.createElement("div");
+      tile.className = `tile tile-${value}`;
+      const span = document.createElement("div");
+      span.className = "tile-value";
+      span.textContent = value === 0 ? "" : value;
+      tile.appendChild(span);
+      gridElement.appendChild(tile);
     }
   }
-  scoreLabel.textContent = `Score: ${score}`;
 }
 
-function compress(row) {
-  const newRow = row.filter(v => v !== 0);
-  while (newRow.length < gridSize) newRow.push(0);
-  return newRow;
-}
-
-function merge(row) {
-  for (let i = 0; i < gridSize - 1; i++) {
-    if (row[i] !== 0 && row[i] === row[i + 1]) {
-      row[i] *= 2;
-      row[i + 1] = 0;
-      score += row[i];
-    }
-  }
-  return row;
-}
-
-function moveLeftLogic() {
-  let newBoard = [];
-  for (let r = 0; r < gridSize; r++) {
-    let row = board[r].slice();
-    row = compress(row);
-    row = merge(row);
-    row = compress(row);
-    newBoard.push(row);
-  }
-  board = newBoard;
-}
-
-function moveRightLogic() {
-  let newBoard = [];
-  for (let r = 0; r < gridSize; r++) {
-    let row = board[r].slice().reverse();
-    row = compress(row);
-    row = merge(row);
-    row = compress(row);
-    newBoard.push(row.reverse());
-  }
-  board = newBoard;
-}
-
-function transpose(b) {
-  return b[0].map((_, c) => b.map(row => row[c]));
-}
-
-function moveUpLogic() {
-  board = transpose(board);
-  moveLeftLogic();
-  board = transpose(board);
-}
-
-function moveDownLogic() {
-  board = transpose(board);
-  moveRightLogic();
-  board = transpose(board);
-}
+/* Move functions */
 
 function handleMove(direction) {
-  const oldBoard = board.map(row => row.slice());
+  if (gameOverFlag) return;
+  const previousBoard = cloneBoard(board);
 
-  if (direction === "left")  moveLeftLogic();
-  if (direction === "right") moveRightLogic();
-  if (direction === "up")    moveUpLogic();
-  if (direction === "down")  moveDownLogic();
+  if (direction === "left") moveLeft();
+  if (direction === "right") moveRight();
+  if (direction === "up") moveUp();
+  if (direction === "down") moveDown();
 
-  if (!boardsEqual(oldBoard, board)) {
-    addNewTile();
-    render();
-    checkStatus();
+  if (!boardsEqual(previousBoard, board)) {
+    spawnTile();
+    renderBoard();
+    updateScoreUI();
+    checkGameState();
   }
+}
+
+function moveLeft() {
+  for (let r = 0; r < GRID_SIZE; r++) {
+    const row = board[r];
+    const { newRow, gainedScore } = compressAndMerge(row);
+    board[r] = newRow;
+    score += gainedScore;
+  }
+}
+
+function moveRight() {
+  for (let r = 0; r < GRID_SIZE; r++) {
+    const row = board[r].slice().reverse();
+    const { newRow, gainedScore } = compressAndMerge(row);
+    board[r] = newRow.reverse();
+    score += gainedScore;
+  }
+}
+
+function moveUp() {
+  board = transpose(board);
+  moveLeft();
+  board = transpose(board);
+}
+
+function moveDown() {
+  board = transpose(board);
+  moveRight();
+  board = transpose(board);
+}
+
+/* compress + merge a row (like Python version) */
+
+function compressAndMerge(row) {
+  const nonZero = row.filter(v => v !== 0);
+  const result = [];
+  let gainedScore = 0;
+
+  let skip = false;
+  for (let i = 0; i < nonZero.length; i++) {
+    if (skip) {
+      skip = false;
+      continue;
+    }
+
+    if (i < nonZero.length - 1 && nonZero[i] === nonZero[i + 1]) {
+      const merged = nonZero[i] * 2;
+      result.push(merged);
+      gainedScore += merged;
+      skip = true;
+    } else {
+      result.push(nonZero[i]);
+    }
+  }
+
+  while (result.length < GRID_SIZE) {
+    result.push(0);
+  }
+
+  return { newRow: result, gainedScore };
+}
+
+/* ---------- Game state checks ---------- */
+
+function checkGameState() {
+  // Check win (only trigger once, then allow continue)
+  if (!gameWon && hasTile(TARGET_TILE)) {
+    gameWon = true;
+    inputLocked = true;
+    showOverlay("You win! 🎉\nKeep going or restart?");
+    return;
+  }
+
+  // Check game over
+  if (isGameOver()) {
+    gameOverFlag = true;
+    inputLocked = true;
+    showOverlay("Game over 😢\nTry again?");
+  }
+}
+
+function hasTile(value) {
+  return board.some(row => row.includes(value));
+}
+
+function isGameOver() {
+  // any empty cell?
+  for (let r = 0; r < GRID_SIZE; r++) {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      if (board[r][c] === 0) return false;
+    }
+  }
+
+  // any possible merges horizontally?
+  for (let r = 0; r < GRID_SIZE; r++) {
+    for (let c = 0; c < GRID_SIZE - 1; c++) {
+      if (board[r][c] === board[r][c + 1]) return false;
+    }
+  }
+
+  // any possible merges vertically?
+  for (let c = 0; c < GRID_SIZE; c++) {
+    for (let r = 0; r < GRID_SIZE - 1; r++) {
+      if (board[r][c] === board[r + 1][c]) return false;
+    }
+  }
+
+  return true;
+}
+
+/* ---------- Utilities ---------- */
+
+function cloneBoard(b) {
+  return b.map(row => row.slice());
 }
 
 function boardsEqual(a, b) {
-  for (let r = 0; r < gridSize; r++) {
-    for (let c = 0; c < gridSize; c++) {
+  for (let r = 0; r < GRID_SIZE; r++) {
+    for (let c = 0; c < GRID_SIZE; c++) {
       if (a[r][c] !== b[r][c]) return false;
     }
   }
   return true;
 }
 
-function checkStatus() {
-  if (board.some(row => row.includes(2048))) {
-    showMessage("🎉 YOU WIN! 🎉");
-  } else if (gameOver()) {
-    showMessage("💀 GAME OVER 💀");
-  }
+function transpose(b) {
+  return b[0].map((_, colIndex) => b.map(row => row[colIndex]));
 }
 
-function gameOver() {
-  for (let r = 0; r < gridSize; r++) {
-    for (let c = 0; c < gridSize; c++) {
-      if (board[r][c] === 0) return false;
-      if (c < gridSize - 1 && board[r][c] === board[r][c + 1]) return false;
-      if (r < gridSize - 1 && board[r][c] === board[r + 1][c]) return false;
+/* Score handling */
+
+function updateScoreUI() {
+  scoreElement.textContent = score;
+
+  if (score > bestScore) {
+    bestScore = score;
+    localStorage.setItem("bestScore2048", bestScore.toString());
+  }
+  bestScoreElement.textContent = bestScore;
+}
+
+/* Overlay */
+
+function showOverlay(message) {
+  overlayText.textContent = message;
+  overlay.classList.remove("hidden");
+}
+
+function hideOverlay() {
+  overlay.classList.add("hidden");
+}
+
+/* Music autoplay (optional, safe if file missing) */
+
+function setupMusicAutoplay() {
+  if (!bgMusic) return;
+  const startMusic = () => {
+    if (bgMusic.paused) {
+      bgMusic.volume = 0.4;
+      bgMusic.play().catch(() => {});
     }
-  }
-  return true;
+    window.removeEventListener("click", startMusic);
+    window.removeEventListener("touchstart", startMusic);
+  };
+  window.addEventListener("click", startMusic, { once: true });
+  window.addEventListener("touchstart", startMusic, { once: true });
 }
 
-function showMessage(text) {
-  msgText.textContent = text;
-  msgDiv.classList.remove("hidden");
-}
-
-// -------------------- touch controls --------------------
+/* Touch controls (swipe) */
 
 function setupTouchControls() {
-  let touchStartX = 0;
-  let touchStartY = 0;
-  let touchEndX = 0;
-  let touchEndY = 0;
-  const minSwipeDistance = 30; // pixels
+  let startX = 0;
+  let startY = 0;
+  let endX = 0;
+  let endY = 0;
+  const minDistance = 30; // px
 
-  document.addEventListener("touchstart", function (e) {
-    const touch = e.touches[0];
-    touchStartX = touch.clientX;
-    touchStartY = touch.clientY;
-  }, { passive: true });
+  const target = document.getElementById("board-wrapper");
 
-  document.addEventListener("touchend", function (e) {
-    const touch = e.changedTouches[0];
-    touchEndX = touch.clientX;
-    touchEndY = touch.clientY;
+  // touchstart
+  target.addEventListener("touchstart", (e) => {
+    if (inputLocked) return;
+    const t = e.touches[0];
+    startX = t.clientX;
+    startY = t.clientY;
+  }, { passive: false });  // ❗ not passive so we can preventDefault if needed
 
-    const dx = touchEndX - touchStartX;
-    const dy = touchEndY - touchStartY;
+  // touchmove → prevent page scrolling while swiping on the board
+  target.addEventListener("touchmove", (e) => {
+    if (inputLocked) return;
+    e.preventDefault();    // ❗ stop browser scroll / pull-to-refresh
+  }, { passive: false });
 
-    if (Math.max(Math.abs(dx), Math.abs(dy)) < minSwipeDistance) {
-      return; // too small: ignore
-    }
+  // touchend
+  target.addEventListener("touchend", (e) => {
+    if (inputLocked) return;
+    const t = e.changedTouches[0];
+    endX = t.clientX;
+    endY = t.clientY;
+
+    const dx = endX - startX;
+    const dy = endY - startY;
+
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < minDistance) return;
 
     if (Math.abs(dx) > Math.abs(dy)) {
-      // horizontal swipe
-      if (dx > 0) {
-        handleMove("right");
-      } else {
-        handleMove("left");
-      }
+      // horizontal
+      if (dx > 0) handleMove("right");
+      else handleMove("left");
     } else {
-      // vertical swipe
-      if (dy > 0) {
-        handleMove("down");
-      } else {
-        handleMove("up");
-      }
+      // vertical
+      if (dy > 0) handleMove("down");
+      else handleMove("up");
     }
-  }, { passive: true });
+  }, { passive: false });
 }
+

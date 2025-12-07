@@ -2,29 +2,55 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>🎨 2048 Deluxe Edition 🎵</title>
-  <link rel="stylesheet" href="style.css">
+  <title>2048 Deluxe</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-  <h1>🎨 2048 Deluxe Edition 🎵</h1>
+  <div class="game-container">
 
-  <div id="score">Score: 0</div>
+    <header class="game-header">
+      <div class="title-block">
+        <h1>2048</h1>
+        <p class="subtitle">Join the tiles, get to <strong>2048!</strong></p>
+      </div>
 
-  <div id="grid"></div>
+      <div class="score-blocks">
+        <div class="score-box">
+          <div class="label">SCORE</div>
+          <div id="score" class="value">0</div>
+        </div>
+        <div class="score-box">
+          <div class="label">BEST</div>
+          <div id="best-score" class="value">0</div>
+        </div>
+      </div>
+    </header>
 
-  <!-- Background music (optional but supported) -->
-  <audio id="bg-music" src="background.mp3" loop></audio>
+    <div class="controls">
+      <button id="new-game">New Game</button>
+      <p class="hint">Use arrow keys or swipe on mobile.</p>
+    </div>
 
-  <!-- Win / Loss Popup -->
-  <div id="message" class="hidden">
-    <div id="message-text"></div>
-    <button id="play-again">Play Again</button>
+    <div id="board-wrapper">
+      <div id="grid" class="grid"></div>
+    </div>
+
+    <!-- Optional background music. If background.mp3 not present, it's fine. -->
+    <audio id="bg-music" src="background.mp3" loop></audio>
+
+    <!-- Overlay message -->
+    <div id="overlay" class="overlay hidden">
+      <div class="overlay-content">
+        <div id="overlay-text" class="overlay-text"></div>
+        <button id="overlay-continue" class="overlay-button">Continue</button>
+        <button id="overlay-restart" class="overlay-button secondary">Restart</button>
+      </div>
+    </div>
+
   </div>
 
   <script src="script.js"></script>
-
 </body>
 </html>
